@@ -74,3 +74,56 @@
    - name: display public route table
      debug: 
        var: rt_ansibleVPC_PublicSubnet
+   
+   - name: Create Security Group
+     ec2_group:
+       aws_access_key: "{{ aws_id }}"
+       aws_secret_key: "{{ aws_key }}"
+       region: "{{ aws_region }}"
+       name: "Test Security Group"
+       description: "Test Security Group"
+       vpc_id: "{{ ansibleVPC.vpc.id }}"
+       tags:
+         Name: Test Security Group
+       rules: 
+         - proto: "tcp"
+           ports: "22"
+           cidr_ip: 0.0.0.0/16
+     register: my_vpc_sg
+
+   - name: Set Security Group ID in variable
+     set_fact:
+       sg_id: "{{ my_vpc_sq.group_id }}"
+   
+   - name: Find AMI Red Hat, no beta x86
+     ec2_ami_info:
+       aws_access_key: "{{ aws_id }}"
+       aws_secret_key: "{{ aws_key }}"
+       region: "{{ aws_region }}"
+       owners: 309956199498
+       filters:
+         architecture: x86_64
+         name: RHEL-8*HVM-*
+     register: amis
+
+   - name: Show AMI's
+     debug:
+       var: amis
+
+   - name: Get the latest one
+     set_fact:
+       latest_ami: "{{ amis.images | sort(attribute='creation_date') | last }}"
+
+   - name: Create SSH key
+     ec2_key:
+       aws_access_key: "{{ aws_id }}"
+       aws_secret_key: "{{ aws_key }}"
+       name: "{{ ssh_keyname }}"
+       region: "{{ aws_region }}"
+     register: ec2_key_result
+
+   - name: Save private key
+     copy: content="{{ ec2_key_result.key.private_key }}" dest ="./demo_key.pem" mode=0600
+     when: ec2_key_result.changed
+
+   - name: 
