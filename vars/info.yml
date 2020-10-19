@@ -1,0 +1,4 @@
+aws_id:     xxxxx
+aws_key:    xxxxx
+aws_region: us-east-2
+ssh_keyname: 
