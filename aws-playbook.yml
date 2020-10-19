@@ -126,4 +126,23 @@
      copy: content="{{ ec2_key_result.key.private_key }}" dest ="./demo_key.pem" mode=0600
      when: ec2_key_result.changed
 
-   - name: 
+   - name: Basic provisioning of ec2 instance
+     ec2: 
+       aws_access_key: "{{ aws_id }}"
+       aws_secret_key: "{{ aws_key }}"
+       region: "{{ aws_region }}"
+       image: "{{ latest_ami.image_id }}"
+       instance_type: t2.micro
+       key_name: "{{ ssh_keyname }}"
+       count: 2
+       state: present
+       group_id: "{{ my_vpc_sg.group_id }}"
+       wait: yes
+       vpc_subnet_id: "{{ public_subnet.subnet.id }}"
+       assign_public_ip: yes
+       instance_tags:
+         Name: new_demo_template
+    register: ec2info
+  - name: Print the results
+    debug:
+      var: ec2info 
